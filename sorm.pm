@@ -5,7 +5,8 @@
 # echo "2017-01-01 00:00:00" > /usr/abills/var/sorm/last_admin_action
 # echo "2017-01-01 00:00:00" > /usr/abills/var/sorm/last_payments
 #
-# $conf{BILLD_PLUGINS}='sorm';
+# $conf{BILLD_PLUGINS} = 'sorm';
+# $conf{ISP_ID} = '123'; # идентифакатор ИСП из "информация по операторам связи и их филалах"'
 #
 
 
@@ -36,6 +37,8 @@ check_system_actions();
 check_payments();
 
 send_changes();
+
+my isp_id = $conf{ISP_ID};
 
 
 #**********************************************************
@@ -134,7 +137,7 @@ sub user_info_report {
 
   my @arr;
   
-  $arr[0] = 1;                                          # идентификатор филиала (справочник филиалов)
+  $arr[0] = $isp_id;                                          # идентификатор филиала (справочник филиалов)
   $arr[1] = $User->{LOGIN};                             # login
   $arr[2] = ($Dv->{IP} ne '0.0.0.0') ? $Dv->{IP} : "";  # статический IP
   $arr[3] = $User->{EMAIL};                             # e-mail
@@ -283,7 +286,7 @@ sub payment_report {
   $Dv->info($attr->{uid});
   my $ip = ($Dv->{IP} ne '0.0.0.0') ? $Dv->{IP} : "";
   
-  my $string = '"1";';                            # идентификатор филиала из справочника
+  my $string = '"' . $isp_id .'";';               # идентификатор филиала из справочника
   $string   .= '"' . $attr->{method} . '";';      # тип оплаты из сравочника
   $string   .= '"' . ($attr->{contract_id} || "") . '";'; # номер договора
   $string   .= '"' . $ip . '";';                  # статический IP
