@@ -31,14 +31,13 @@ use Finance;
 my $User = Users->new($db, $Admin, \%conf);
 my $Company = Companies->new($db, $Admin, \%conf);
 my $Payments = Finance->payments($db, $Admin, \%conf);
+my isp_id = $conf{ISP_ID};
 
 check_admin_actions();
 check_system_actions();
 check_payments();
 
 send_changes();
-
-my isp_id = $conf{ISP_ID};
 
 
 #**********************************************************
