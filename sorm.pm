@@ -19,7 +19,8 @@ our (
   $db,
   $users,
   $Dv,
-  $var_dir
+  $var_dir,
+  $argv,
 );
 
 use Abills::Base qw/cmd _bp/;
@@ -31,11 +32,22 @@ use Finance;
 my $User = Users->new($db, $Admin, \%conf);
 my $Company = Companies->new($db, $Admin, \%conf);
 my $Payments = Finance->payments($db, $Admin, \%conf);
-my isp_id = $conf{ISP_ID};
+my $isp_id = $conf{ISP_ID};
 
-check_admin_actions();
-check_system_actions();
-check_payments();
+if ($argv->{DICTIONARIES} && $argv->{DICTIONARIES} eq 'NAS') {
+  
+}
+elsif ($argv->{DICTIONARIES} && $argv->{DICTIONARIES} eq 'serices') {
+
+}
+elsif ($argv->{DICTIONARIES} && $argv->{DICTIONARIES} eq 'serices') {
+
+}
+else {
+  check_admin_actions();
+  check_system_actions();
+  check_payments();
+}
 
 send_changes();
 
@@ -142,11 +154,11 @@ sub user_info_report {
   $arr[3] = $User->{EMAIL};                             # e-mail
   $arr[4] = $User->{PHONE};                             # телефон
   $arr[5] = $Dv->{CID};                                 # MAC-адрес
-  $arr[6] = $User->{CONTRACT_DATE};                     # дата договора
+  $arr[6] = _date_format($User->{CONTRACT_DATE});       # дата договора
   $arr[7] = $User->{CONTRACT_ID};                       # номер договора
   $arr[8] = $User->{DISABLE};                           # статус абонента (0 - подключен, 1 - отключен)
-  $arr[9] = $User->{REGISTRATION};                      # дата активации основной услуги
-  $arr[10] = ($User->{EXPIRE} ne '0000-00-00' && $User->{EXPIRE} lt $DATE) ? $User->{EXPIRE} : ""; # дата отключения основной услуги
+  $arr[9] = _date_format($User->{REGISTRATION});        # дата активации основной услуги
+  $arr[10] = ($User->{EXPIRE} ne '0000-00-00' && $User->{EXPIRE} lt $DATE) ? _date_format($User->{EXPIRE}) : ""; # дата отключения основной услуги
 
 #физ лицо
   if (!$User->{COMPANY_ID}) {
@@ -155,7 +167,7 @@ sub user_info_report {
 
     my $passport = "";
     if ($User->{PASPORT_NUM} && $User->{PASPORT_GRANT} && $User->{PASPORT_DATE}) {
-      $passport = $User->{PASPORT_NUM} . " " . $User->{PASPORT_GRANT} . " " . $User->{PASPORT_DATE};
+      $passport = $User->{PASPORT_NUM} . " " . $User->{PASPORT_GRANT} . " " . _date_format($User->{PASPORT_DATE});
     }
     else {
       print "No passport info for UID : $uid\n";
@@ -285,12 +297,12 @@ sub payment_report {
   $Dv->info($attr->{uid});
   my $ip = ($Dv->{IP} ne '0.0.0.0') ? $Dv->{IP} : "";
   
-  my $string = '"' . $isp_id .'";';               # идентификатор филиала из справочника
-  $string   .= '"' . $attr->{method} . '";';      # тип оплаты из сравочника
-  $string   .= '"' . ($attr->{contract_id} || "") . '";'; # номер договора
-  $string   .= '"' . $ip . '";';                  # статический IP
-  $string   .= '"' . $attr->{datetime} . '";';    # дата пополнения
-  $string   .= '"' . $attr->{sum} . '";';         # сумма пополнения
+  my $string = '"' . $isp_id .'";';                             # идентификатор филиала из справочника
+  $string   .= '"' . $attr->{method} . '";';                    # тип оплаты из сравочника
+  $string   .= '"' . ($attr->{contract_id} || "") . '";';       # номер договора
+  $string   .= '"' . $ip . '";';                                # статический IP
+  $string   .= '"' . _date_format($attr->{datetime}) . '";';    # дата пополнения
+  $string   .= '"' . $attr->{sum} . '";';                       # сумма пополнения
   $string   .= '"' . ($attr->{dsc} || "") . '"' . "\n";         # дополнительная информация
 
   _add_report('payment', $string);
@@ -326,6 +338,21 @@ sub _add_report {
   close $fh;
 
   return 1;
+}
+
+#**********************************************************
+=head2 _date_format($attr)
+
+=cut
+#**********************************************************
+sub _date_format {
+  my ($date) = @_;
+  
+  # (substr($date, 0, 4), substr($date, 6, 2)) = (substr($date, 8, 2), substr($date, 0, 4));
+  # $date =~ s/\-/\./g;
+
+  $date =~ s/(\d{4})-(\d{2})-(\d{2})\s([0-9:]+)/$3.$2.$1 $4/; 
+  return $date;
 }
 
 #**********************************************************
